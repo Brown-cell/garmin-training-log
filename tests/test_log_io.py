@@ -40,7 +40,7 @@ class FakeWorksheet:
 def row_for(date, **cells):
     r = [""] * len(HEADER)
     r[0] = date
-    r[1] = "水"
+    r[1] = "Wed"
     for name, v in cells.items():
         r[HEADER.index(name)] = v
     return r
@@ -60,7 +60,7 @@ def test_column_letters():
 
 
 def test_parse_km_sums_every_distance_it_finds():
-    assert log_io.parse_km("8.20km 42分 + jog計1.20km") == 9.4
+    assert log_io.parse_km("8.20km 42min + jog 1.20km") == 9.4
     assert log_io.parse_km("5×1000m") == ""
     assert log_io.parse_km("") == ""
 
@@ -89,24 +89,24 @@ def test_the_three_column_sets_do_not_overlap():
 # the policy                                                                   #
 # --------------------------------------------------------------------------- #
 def test_hand_columns_are_never_written():
-    cells = {"メモ": "felt awful", "試合": "5000 m", "種別": "Jog", "負荷": 90}
+    cells = {"note": "felt awful", "event": "5000 m", "kind": "Jog", "load": 90}
     got = refresh.writable(cells, 7, COL)
     written = {c for (_, c, _) in got}
-    assert COL["メモ"] not in written
-    assert COL["試合"] not in written
-    assert written == {COL["種別"], COL["負荷"]}
+    assert COL["note"] not in written
+    assert COL["event"] not in written
+    assert written == {COL["kind"], COL["load"]}
 
 
 def test_columns_absent_from_the_sheet_are_skipped():
-    got = refresh.writable({"種別": "Jog", "not_a_column": 1}, 7, COL)
-    assert got == [(7, COL["種別"], "Jog")]
+    got = refresh.writable({"kind": "Jog", "not_a_column": 1}, 7, COL)
+    assert got == [(7, COL["kind"], "Jog")]
 
 
 @pytest.fixture()
 def policy_env(monkeypatch, athlete, gates):
     """day_cells with the two Garmin round-trips replaced by fixtures."""
-    garmin = {"負荷": 90, "睡眠h": 7.5, "km": 8.0, "体調点": 91}
-    derived = {"種別": "Jog", "km": 8.0, "詳細": "8.00km 40分", "データ": "5:00/km"}
+    garmin = {"load": 90, "sleep_h": 7.5, "km": 8.0, "cond_score": 91}
+    derived = {"kind": "Jog", "km": 8.0, "menu": "8.00km 40min", "result": "5:00/km"}
     monkeypatch.setattr(log_io, "garmin_cells",
                         lambda g, iso, athlete=None: dict(garmin))
     monkeypatch.setattr(log_io, "running_cells",
@@ -125,81 +125,81 @@ def call(grid, policy_env, sync=None, today=None):
 def test_an_empty_row_is_filled_from_garmin(policy_env):
     grid = grid_with(row_for("2026-07-01"))
     cells, _ = call(grid, policy_env)
-    assert cells["種別"] == "Jog"
-    assert cells["詳細"] == "8.00km 40分"
-    assert cells["負荷"] == 90
+    assert cells["kind"] == "Jog"
+    assert cells["menu"] == "8.00km 40min"
+    assert cells["load"] == 90
 
 
 def test_a_hand_written_label_is_left_alone(policy_env):
-    grid = grid_with(row_for("2026-07-01", 種別="VO2", 詳細="5x1000m",
-                             データ="3:05"))
+    grid = grid_with(row_for("2026-07-01", kind="VO2", menu="5x1000m",
+                             result="3:05"))
     cells, _ = call(grid, policy_env)
-    assert "種別" not in cells                   # not offered for writing at all
-    assert "詳細" not in cells
-    assert cells["負荷"] == 90                   # Garmin columns still refresh
+    assert "kind" not in cells                   # not offered for writing at all
+    assert "menu" not in cells
+    assert cells["load"] == 90                   # Garmin columns still refresh
 
 
 def test_only_the_empty_session_columns_are_filled(policy_env):
-    grid = grid_with(row_for("2026-07-01", 種別="VO2"))
+    grid = grid_with(row_for("2026-07-01", kind="VO2"))
     cells, _ = call(grid, policy_env)
-    assert "種別" not in cells
-    assert cells["詳細"] == "8.00km 40分"        # this one was empty
+    assert "kind" not in cells
+    assert cells["menu"] == "8.00km 40min"        # this one was empty
 
 
 def test_a_rest_placeholder_is_re_derived_when_running_appears(policy_env):
-    grid = grid_with(row_for("2026-07-01", 種別="rest"))
+    grid = grid_with(row_for("2026-07-01", kind="rest"))
     cells, note = call(grid, policy_env)
-    assert cells["種別"] == "Jog"
+    assert cells["kind"] == "Jog"
     assert "healed" in note
 
 
 def test_a_stale_automatic_jog_is_re_derived(policy_env, monkeypatch):
     """Machine-written text plus more running than it accounts for."""
     monkeypatch.setattr(log_io, "garmin_cells",
-                        lambda g, iso, athlete=None: {"km": 14.0, "負荷": 120})
+                        lambda g, iso, athlete=None: {"km": 14.0, "load": 120})
     monkeypatch.setattr(log_io, "running_cells",
                         lambda g, iso, gates=None, race=False:
-                        {"種別": "Jog", "km": 14.0, "詳細": "8.00km 40分 + 6.00km 30分",
-                         "データ": "5:00/km"})
-    grid = grid_with(row_for("2026-07-01", 種別="Jog", 詳細="8.00km 40分",
-                             データ="5:00/km"))
+                        {"kind": "Jog", "km": 14.0, "menu": "8.00km 40min + 6.00km 30min",
+                         "result": "5:00/km"})
+    grid = grid_with(row_for("2026-07-01", kind="Jog", menu="8.00km 40min",
+                             result="5:00/km"))
     cells, note = call(grid, policy_env)
-    assert "6.00km" in cells["詳細"]
+    assert "6.00km" in cells["menu"]
     assert "healed" in note
 
 
 def test_hand_written_text_is_not_treated_as_stale(policy_env, monkeypatch):
     monkeypatch.setattr(log_io, "garmin_cells",
                         lambda g, iso, athlete=None: {"km": 14.0})
-    grid = grid_with(row_for("2026-07-01", 種別="Jog",
-                             詳細="easy loop round the park", データ="felt fine"))
+    grid = grid_with(row_for("2026-07-01", kind="Jog",
+                             menu="easy loop round the park", result="felt fine"))
     cells, note = call(grid, policy_env)
-    assert "詳細" not in cells
+    assert "menu" not in cells
     assert note == ""
 
 
 def test_rest_needs_proof_that_the_watch_synced(policy_env, monkeypatch):
     monkeypatch.setattr(log_io, "running_cells",
                         lambda g, iso, gates=None, race=False:
-                        {"種別": "rest", "km": "", "詳細": "", "データ": ""})
+                        {"kind": "rest", "km": "", "menu": "", "result": ""})
     grid = grid_with(row_for("2026-07-01"))
 
     cells, note = call(grid, policy_env, sync=dt.datetime(2026, 7, 3, 6, 0))
-    assert cells["種別"] == "rest"
+    assert cells["kind"] == "rest"
 
     cells, note = call(grid, policy_env, sync=dt.datetime(2026, 6, 30, 6, 0))
-    assert "種別" not in cells                   # no evidence -> leave it blank
+    assert "kind" not in cells                   # no evidence -> leave it blank
     assert "no sync evidence" in note
 
 
 def test_today_is_never_marked_rest(policy_env, monkeypatch):
     monkeypatch.setattr(log_io, "running_cells",
                         lambda g, iso, gates=None, race=False:
-                        {"種別": "rest", "km": "", "詳細": "", "データ": ""})
+                        {"kind": "rest", "km": "", "menu": "", "result": ""})
     grid = grid_with(row_for("2026-07-01"))
     cells, note = call(grid, policy_env, today=dt.date(2026, 7, 1),
                        sync=dt.datetime(2026, 7, 1, 20, 0))
-    assert "種別" not in cells
+    assert "kind" not in cells
 
 
 def test_the_race_column_reaches_the_classifier(policy_env, monkeypatch):
@@ -207,13 +207,13 @@ def test_the_race_column_reaches_the_classifier(policy_env, monkeypatch):
 
     def running_cells(g, iso, gates=None, race=False):
         seen["race"] = race
-        return {"種別": "race", "km": 3.0, "詳細": "3000m", "データ": "9:05"}
+        return {"kind": "race", "km": 3.0, "menu": "3000m", "result": "9:05"}
 
     monkeypatch.setattr(log_io, "running_cells", running_cells)
-    grid = grid_with(row_for("2026-07-01", 試合="記録会 3000m"))
+    grid = grid_with(row_for("2026-07-01", event="club meet 3000m"))
     cells, _ = call(grid, policy_env)
     assert seen["race"] is True
-    assert cells["種別"] == "race"
+    assert cells["kind"] == "race"
 
 
 def test_an_ordinary_note_in_the_race_column_is_not_a_race(policy_env, monkeypatch):
@@ -221,9 +221,9 @@ def test_an_ordinary_note_in_the_race_column_is_not_a_race(policy_env, monkeypat
 
     def running_cells(g, iso, gates=None, race=False):
         seen["race"] = race
-        return {"種別": "Jog", "km": 8.0, "詳細": "8.00km 40分", "データ": ""}
+        return {"kind": "Jog", "km": 8.0, "menu": "8.00km 40min", "result": ""}
 
     monkeypatch.setattr(log_io, "running_cells", running_cells)
-    grid = grid_with(row_for("2026-07-01", 試合="dentist"))
+    grid = grid_with(row_for("2026-07-01", event="dentist"))
     call(grid, policy_env)
     assert seen["race"] is False

@@ -74,12 +74,13 @@ def main() -> int:
             laps_of=lambda a: laps.get(a["activityId"], []))
         lines = (data or "-").split("\n")
         print()
-        print(f"  in    {description}")
-        print(f"  種別  {(kind or '-'):<16}quality session: {'yes' if workout else 'no'}")
-        print(f"  詳細  {menu or '-'}")
-        print(f"  データ {lines[0]}")
+        print(f"  {'in':<8}{description}")
+        print(f"  {'kind':<8}{(kind or '-'):<16}"
+              f"quality session: {'yes' if workout else 'no'}")
+        print(f"  {'menu':<8}{menu or '-'}")
+        print(f"  {'result':<8}{lines[0]}")
         for extra in lines[1:]:
-            print(f"        {extra}")
+            print(f"  {'':<8}{extra}")
     return 0
 
 

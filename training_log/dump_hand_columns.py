@@ -33,10 +33,10 @@ from . import config
 # Month tabs in either spelling, plus any suffix, so archive tabs come along.
 # Anchored at the start so Log, Status and stray sheets are excluded.
 MONTH_TAB = re.compile(r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)", re.I)
-TITLE_RE = re.compile(r"(\d{4})\s*年\s*(\d{1,2})\s*月")     # "2026年8月 練習日誌"
-DAY_RE = re.compile(r"^(\d{1,2})/(\d{1,2})\b")             # "8/11 月"
-COLS = ("予定", "メモ")
-FALLBACK = {"予定": 1, "メモ": 10}          # month_view.HAND
+TITLE_RE = re.compile(r"(\d{4})-(\d{1,2})\b")      # "Training log 2026-08"
+DAY_RE = re.compile(r"^(\d{1,2})/(\d{1,2})\b")     # "8/11 Mon"
+COLS = ("plan", "note")
+FALLBACK = {"plan": 1, "note": 10}          # month_view.HAND
 
 
 def find_hand_cols(rows):
@@ -90,7 +90,7 @@ def main(argv=None):
             if not d:
                 continue
             vals = [r[i].strip() if len(r) > i else ""
-                    for i in (hand["予定"], hand["メモ"])]
+                    for i in (hand["plan"], hand["note"])]
             if not any(vals):
                 continue
             # ISO when the year is knowable, else the tab's own label. Never a
@@ -124,7 +124,7 @@ def main(argv=None):
     # utf-8-sig so a spreadsheet application opens it correctly in a recovery.
     with open(tmp, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f, delimiter="\t", lineterminator="\n")
-        w.writerow(["tab", "date", "予定", "メモ"])
+        w.writerow(["tab", "date", "plan", "note"])
         w.writerows(out)
     os.replace(tmp, out_path)
 

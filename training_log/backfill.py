@@ -99,8 +99,8 @@ def main(argv=None):
             continue
         log_io.write_cells(ws, ups)
         print(f"  {iso} r{row}: {len(ups)} cells "
-              f"(kind={cells.get('種別', '-')} "
-              f"condition={cells.get('体調評価', '-')} "
+              f"(kind={cells.get('kind', '-')} "
+              f"condition={cells.get('cond_label', '-')} "
               f"ACWR={cells.get('ACWR', '-')}){note}")
         if args.sleep:
             time.sleep(args.sleep)

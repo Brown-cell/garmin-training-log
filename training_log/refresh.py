@@ -43,12 +43,12 @@ PLACEHOLDERS = {"rest"}
 
 # A race column entry matching this marks the day as a race, so it is filed as
 # a race rather than as whichever training zone its heart rate resembled.
-RACE_RE = re.compile(r"レース|実戦|戦|記録会|競技会|TT|race", re.I)
+RACE_RE = re.compile(r"race|TT|time trial|meet|competition|championship", re.I)
 
-# A menu string in the machine's own jog format ("8.20km 42分 + jog計1.2km").
+# A menu string in the machine's own jog format ("8.20km 42min + jog 1.2km").
 # Anything else in that column is hand-written text and is left alone.
 AUTO_DETAIL_RE = re.compile(
-    r"^[\d.]+km( \d+分)?(\s*\+\s*(jog計?)?[\d.]+km( \d+分)?)*$")
+    r"^[\d.]+km( \d+min)?(\s*\+\s*(jog )?[\d.]+km( \d+min)?)*$")
 
 STALE_JOG_KM = 0.8      # km of unexplained running that makes a jog stale
 
@@ -78,10 +78,10 @@ def day_cells(g, iso, row, grid, col_of, athlete, gates, sync, today):
     cells = log_io.garmin_cells(g, iso, athlete=athlete)      # always refreshed
     note = ""
 
-    old_kind = cur(grid, row, col_of.get("種別"))
-    old_detail = cur(grid, row, col_of.get("詳細"))
-    race_cell = (cur(grid, row, col_of.get("試合"))
-                 or cur(grid, row, col_of.get("予定")))
+    old_kind = cur(grid, row, col_of.get("kind"))
+    old_detail = cur(grid, row, col_of.get("menu"))
+    race_cell = (cur(grid, row, col_of.get("event"))
+                 or cur(grid, row, col_of.get("plan")))
     race = bool(RACE_RE.search(race_cell))
 
     need_fill = any(not cur(grid, row, col_of.get(n))
@@ -95,16 +95,16 @@ def day_cells(g, iso, row, grid, col_of, athlete, gates, sync, today):
 
     if need_fill or heal or stale_jog:
         run = log_io.running_cells(g, iso, gates=gates, race=race)
-        if run.get("種別") == "rest":
+        if run.get("kind") == "rest":
             if not old_kind and sync_covers(sync, iso, today):
-                cells["種別"] = "rest"                # confirmed no-run day
+                cells["kind"] = "rest"                # confirmed no-run day
             elif not old_kind:
                 note = " (no sync evidence - left blank)"
         elif heal or stale_jog:                      # re-derive a pipeline value
-            for name in ("種別", "詳細", "データ"):
+            for name in ("kind", "menu", "result"):
                 if run.get(name) not in (None, ""):
                     cells[name] = run[name]
-            note = f" (healed: {old_kind or '<empty>'} -> {run['種別']})"
+            note = f" (healed: {old_kind or '<empty>'} -> {run['kind']})"
         else:                                        # ordinary fill-empty
             for name in log_io.FILL_EMPTY_COLS:
                 if (not cur(grid, row, col_of.get(name))
@@ -162,16 +162,17 @@ def main(argv=None):
         if row is None:                       # dry run: the row does not exist yet
             print(f"{iso}: (row would be created)")
             continue
-        old_kind = cur(grid, row, col_of.get("種別"))
+        old_kind = cur(grid, row, col_of.get("kind"))
         cells, note = day_cells(g, iso, row, grid, col_of, athlete, gates,
                                 sync, today)
         wrote = writable(cells, row, col_of)
         updates += wrote
         if wrote:
             touched += 1
-        print(f"{iso} r{row}: sleep {cells.get('睡眠h', '-')} "
-              f"condition {cells.get('体調点', '-')}{cells.get('体調評価', '-')} "
-              f"kind {cells.get('種別', old_kind or '-')} "
+        print(f"{iso} r{row}: sleep {cells.get('sleep_h', '-')} "
+              f"condition {cells.get('cond_score', '-')}"
+              f"{cells.get('cond_label', '-')} "
+              f"kind {cells.get('kind', old_kind or '-')} "
               f"ACWR {cells.get('ACWR', '-')}  [{len(wrote)} cells]{note}")
 
     if args.dry_run:

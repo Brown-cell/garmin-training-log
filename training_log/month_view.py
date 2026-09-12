@@ -38,7 +38,7 @@ import sys
 
 from . import classify, config, log_io
 
-WD = ["月", "火", "水", "木", "金", "土", "日"]
+WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def rgb(hexs):
@@ -54,10 +54,11 @@ AMBER, RED = rgb("9A6700"), rgb("A61C00")
 # "Jog + Threshold" count; "Jog + WS", "Steady" and rest do not.
 QUALITY_RE = ('"(?i)(vo2|obla|thresh|anaerob|lactat|speed|race|sharp|fartlek)"')
 
-HEADER = ["日付", "予定", "種別", "km", "内容", "睡眠", "体調", "HRV", "ACWR", "負荷",
-          "メモ", "睡眠h", "深h", "RHR", "準備", "歩数", "強度分", "BB", "回復h", ""]
+HEADER = ["date", "plan", "kind", "km", "detail", "sleep", "condition", "HRV",
+          "ACWR", "load", "note", "sleep_h", "deep_h", "RHR", "readiness",
+          "steps", "intensity", "BB", "recovery_h", ""]
 NCOL = len(HEADER)                    # 20; the last column is a hidden helper
-HAND = {"予定": 1, "メモ": 10}         # 0-based indexes of the hand columns
+HAND = {"plan": 1, "note": 10}        # 0-based indexes of the hand columns
 
 
 def log_col(name):
@@ -97,12 +98,14 @@ def week_avg(col, year, month, dlo, dhi):
 
 def build_rows(year, month, gates):
     """(grid, day rows, subtotal rows). Rows are 1-based sheet rows."""
-    km_c, cond_c, kind_c = log_col("km"), log_col("体調点"), log_col("種別")
+    km_c, cond_c, kind_c = log_col("km"), log_col("cond_score"), log_col("kind")
+    mon = calendar.month_abbr[month]
     grid = [[""] * NCOL for _ in range(3)]     # title / KPI labels / KPI values
-    grid[0][1] = f"{year}年{month}月 練習日誌"  # column A is frozen, so start at B
+    grid[0][1] = f"Training log {year}-{month:02d}"   # column A is frozen
     lab = grid[1]
-    lab[1], lab[2], lab[4] = "月間km", "今週km", f"km推移({month}月)"
-    lab[5], lab[6], lab[8], lab[10] = "ポイント", "平均体調", "ACWR", f"体調推移({month}月)"
+    lab[1], lab[2], lab[4] = "month km", "this week km", f"km by day ({mon})"
+    lab[5], lab[6], lab[8], lab[10] = ("quality sessions", "mean condition",
+                                       "ACWR", f"condition by day ({mon})")
     a, e = "Log!$A:$A", f"Log!${km_c}:${km_c}"
     lo, hi = d8(year, month, 1), d8(year, month, calendar.monthrange(year, month)[1])
     val = grid[2]
@@ -133,7 +136,7 @@ def build_rows(year, month, gates):
     day_rows, sub_rows, week = [], [], []
     nweek = 0
     ndays = calendar.monthrange(year, month)[1]
-    detail_c, data_c = log_col("詳細"), log_col("データ")
+    detail_c, data_c = log_col("menu"), log_col("result")
     for day in range(1, ndays + 1):
         r = len(grid) + 1                      # 1-based sheet row
         date = dt.date(year, month, day)
@@ -141,7 +144,7 @@ def build_rows(year, month, gates):
         row[0] = f"{month}/{day} {WD[date.weekday()]}"
         row[2] = "=" + idx(kind_c, r)
         row[3] = "=" + idx(km_c, r)
-        # 内容 = menu + result. On a quality day the result lines are stacked
+        # detail = menu + result. On a quality day the result lines are stacked
         # under the menu line so every split is visible (the column wraps);
         # easy days stay on one line.
         row[4] = (f'=IFERROR(LET(d,IF(INDEX(Log!${detail_c}:${detail_c},$T{r})="","",'
@@ -151,13 +154,14 @@ def build_rows(year, month, gates):
                   f'q,AND($C{r}<>"",LOWER($C{r})<>"jog",LOWER($C{r})<>"off",'
                   f'LOWER($C{r})<>"rest"),'
                   f'IF(x="",d,IF(d="",x,d&IF(q,CHAR(10),"  ")&x))),"")')
-        row[5] = "=" + idx(log_col("睡眠点"), r)
+        row[5] = "=" + idx(log_col("sleep_score"), r)
         row[6] = "=" + idx(cond_c, r)
         row[7] = hrv_formula(r, year, month, day)
         row[8] = "=" + idx(acwr_c, r)
-        row[9] = "=" + idx(log_col("負荷"), r)
-        for i, k in enumerate(["睡眠h", "深睡眠h", "RHR", "準備度", "歩数",
-                               "強度分", "BB消費", "回復h"], start=11):
+        row[9] = "=" + idx(log_col("load"), r)
+        for i, k in enumerate(["sleep_h", "deep_h", "RHR", "readiness", "steps",
+                               "intensity_min", "bb_drained", "recovery_h"],
+                              start=11):
             row[i] = "=" + idx(log_col(k), r)
         row[19] = f'=IFERROR(MATCH({d8(year, month, day)},Log!$A:$A,0),"")'
         grid.append(row)
@@ -167,7 +171,7 @@ def build_rows(year, month, gates):
             nweek += 1
             r2 = len(grid) + 1
             sub = [""] * NCOL
-            sub[0] = f"第{nweek}週 計"
+            sub[0] = f"Week {nweek} total"
             sub[3] = f"=ROUND(SUM(D{week[0][1]}:D{week[-1][1]}),1)"
             sub[6] = week_avg(cond_c, year, month, week[0][0], week[-1][0])
             sub[9] = f"=SUM(J{week[0][1]}:J{week[-1][1]})"
@@ -176,13 +180,14 @@ def build_rows(year, month, gates):
             week = []
 
     grid.append([""] * NCOL)
-    for txt in ("体調: 90〜=好調 / 66〜89=良好・小さな減点あり(太字) / "
-                "50〜65=要観察(濃黄) / 〜49=不調(濃赤)",
-                "負荷 = Garmin activityTrainingLoad(EPOC由来・無単位)。"
-                "週合計の目安は Status タブの目標帯(CTL×7)を見る。",
-                "種別 濃紺太字 = ポイント練(VO2/OBLA/Threshold/Anaerobic/Lactate/"
-                "Speed/race…)。内容 = メニュー行 + セット毎の結果行"
-                "(スプリット・HRmax・ランパワーW)。"):
+    for txt in ("condition: 90+ strong / 66-89 fine, small deduction (bold) / "
+                "50-65 watch (amber) / below 50 unwell (red)",
+                "load = Garmin activityTrainingLoad (derived from EPOC, "
+                "unitless). For a weekly total, read the target band on the "
+                "Status tab (CTL x 7).",
+                "kind in bold navy = a quality session (VO2 / OBLA / Threshold "
+                "/ Anaerobic / Lactate / Speed / race). detail = the menu line "
+                "plus one result line per set (splits, HRmax, running watts)."):
         f = [""] * NCOL
         f[0] = txt
         grid.append(f)
@@ -216,13 +221,16 @@ def note(sid, r, c, text):
 
 
 def classifier_note(gates, acwr_lo, acwr_hi):
-    """The hover note on 種別, generated from the athlete's own thresholds."""
-    return ("種別は自動分類: ラップ構造(レップ長・回復)+レップ平均HR"
-            f"(LT{gates.hr_threshold_bpm:.0f}/OBLA{gates.hr_obla_bpm:.0f}/"
-            f"VO2 {gates.hr_vo2_bpm:.0f}+)+ランパワー(腕光学HR欠測の救済; "
-            f"Thr{gates.power_threshold_w:.0f}W/VO2 {gates.power_vo2_w:.0f}W+)。"
-            "閾値は athlete.json。違うと思ったらセルを直接書き換え"
-            "→以後この機械は上書きしない。")
+    """The hover note on `kind`, built from the athlete's own thresholds."""
+    return ("kind is classified automatically from the lap structure (rep "
+            "length, recovery), the average heart rate of the reps "
+            f"(LT {gates.hr_threshold_bpm:.0f} / OBLA {gates.hr_obla_bpm:.0f} / "
+            f"VO2 {gates.hr_vo2_bpm:.0f}+) and running power, which rescues a "
+            "rep whose wrist heart rate dropped out "
+            f"(Thr {gates.power_threshold_w:.0f} W / "
+            f"VO2 {gates.power_vo2_w:.0f} W+). The thresholds live in "
+            "athlete.json. If a label is wrong, type over the cell: the "
+            "pipeline never overwrites it again.")
 
 
 def fmt_requests(sid, nrow, sub_rows, ntotal, gates, acwr_lo, acwr_hi):
@@ -288,21 +296,28 @@ def fmt_requests(sid, nrow, sub_rows, ntotal, gates, acwr_lo, acwr_hi):
                                 "bottom": {"style": "SOLID_MEDIUM", "color": NAVY}}})
     q.append(repeat(sid, nrow, ntotal, 0, NCOL, {
         "textFormat": {"foregroundColor": NAVY, "italic": True, "fontSize": 10}}))
-    q.append(note(sid, 3, 6, "体調点 = 100点から4つの減点: 自律神経(HRV vs 平常帯・"
-                             "直近の練習で説明できる分は軽くする)／睡眠(前夜+蓄積・"
-                             "練習では免罪されない)／身体症状(RHR・呼吸・安静回復)／"
-                             "副次(ストレス・夜間回復)。色はラベルと同じ境界: "
-                             "90以上=好調 / 66-89=良好 / 50-65=要観察 / 50未満=不調。"
-                             "カッコはその日いちばん大きかった減点。末尾の * は"
-                             "入力に欠けがある日。"))
-    q.append(note(sid, 3, 9, "Garmin activityTrainingLoad(EPOC由来・無単位)。"
-                             "週合計の目安は Status タブの目標帯(CTL×7)。"))
-    q.append(note(sid, 3, 4, "ポイント練はメニュー(1行目)+セット毎の結果行"
-                             "(スプリット・HRmax・ランパワーW)。jog等は1行。"))
-    q.append(note(sid, 3, 7, "HRV の ↑↓ は「直前28日のばらつき(±1SD)を超えて動いた」"
-                             "という統計的な印で、健康の良し悪しの判定ではない。"
-                             "体調点が使っている判定帯は Garmin の平常帯(別物)なので、"
-                             "矢印が無くても体調点は下がることがある。"))
+    q.append(note(sid, 3, 6, "condition = 100 minus four deductions: autonomic "
+                             "(HRV against the personal band, lightened by how "
+                             "well recent training explains the drop), sleep "
+                             "(last night plus accumulated debt, never excused "
+                             "by training), somatic (RHR, respiration, daytime "
+                             "rest) and secondary (stress, overnight recharge). "
+                             "The colours follow the labels: 90+ strong / 66-89 "
+                             "fine / 50-65 watch / below 50 unwell. The bracket "
+                             "names the largest single deduction of the day, "
+                             "and a trailing * means an input was missing."))
+    q.append(note(sid, 3, 9, "Garmin activityTrainingLoad (derived from EPOC, "
+                             "unitless). For a weekly total, read the target "
+                             "band on the Status tab (CTL x 7)."))
+    q.append(note(sid, 3, 4, "A quality day shows the menu on the first line "
+                             "and one result line per set (splits, HRmax, "
+                             "running watts). An easy day stays on one line."))
+    q.append(note(sid, 3, 7, "The arrow on HRV means the value moved beyond one "
+                             "standard deviation of its own preceding 28 days. "
+                             "It is a statistical mark, not a health verdict. "
+                             "The condition score judges HRV against Garmin's "
+                             "personal band, which is a different threshold, so "
+                             "a day can lose condition points with no arrow."))
     q.append(note(sid, 3, 2, classifier_note(gates, acwr_lo, acwr_hi)))
     # Conditional formats: exception markers only, no cell shading.
     q.append(boolrule(sid, [gr(sid, 4, nrow, 2, 3)], {
@@ -398,15 +413,15 @@ def main(argv=None):
     # intended -- and pouring one into the other resurrects entries that were
     # deleted on purpose.
     lvals = sh.worksheet(log_io.TAB).get_all_values()
-    memo_i = log_io.HEADER.index("メモ")
+    memo_i = log_io.HEADER.index("note")
     byd = {r[0]: r for r in lvals[1:] if r and r[0]}
     seeded = 0
     for day, r in enumerate(day_rows, 1):
         lr = byd.get(f"{year}-{month:02d}-{day:02d}")
         if not lr:
             continue
-        if len(lr) > memo_i and lr[memo_i].strip() and not grid[r - 1][HAND["メモ"]]:
-            grid[r - 1][HAND["メモ"]] = lr[memo_i]
+        if len(lr) > memo_i and lr[memo_i].strip() and not grid[r - 1][HAND["note"]]:
+            grid[r - 1][HAND["note"]] = lr[memo_i]
             seeded += 1
     if seeded:
         print(f"(seeded {seeded} hand cells from {log_io.TAB})")

@@ -25,7 +25,7 @@ import sys
 
 from . import config, log_io
 
-GARMIN_EVIDENCE = ("歩数", "睡眠h", "負荷", "準備度")
+GARMIN_EVIDENCE = ("steps", "sleep_h", "load", "readiness")
 STALE_DAYS = 2
 
 

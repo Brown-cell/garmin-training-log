@@ -101,7 +101,7 @@ def test_a_morning_jog_before_a_workout_is_kept_in_the_label(gates):
             2: [lap(1000, 240, aHR=176, mHR=181, pw=340) for _ in range(8)]}
     kind, menu, _, _ = run([jog, work], laps, gates)
     assert kind == "Jog + Threshold"
-    assert "jog計6.0km" in menu
+    assert "jog 6.0km" in menu
 
 
 def test_the_race_column_overrides_the_zone(gates):

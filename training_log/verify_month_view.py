@@ -77,8 +77,8 @@ def main(argv=None):
 
     log = {r[0]: r for r in sh.worksheet(log_io.TAB).get_all_values()[1:]
            if r and r[0]}
-    detail_i = log_io.HEADER.index("詳細")
-    data_i = log_io.HEADER.index("データ")
+    detail_i = log_io.HEADER.index("menu")
+    data_i = log_io.HEADER.index("result")
     miss, nq = [], 0
     for r in day_rows:
         day = int(r[0].split("/")[1].split(" ")[0])

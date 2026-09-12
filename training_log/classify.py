@@ -3,10 +3,10 @@
 
 `build_entry()` returns (kind, menu, data, is_workout):
 
-  kind  ("種別")  a label: rest / Jog / Jog + WS / Threshold / VO2 / race /
-                  composites such as "Jog + Threshold"
-  menu  ("詳細")  what was done: "5x1000m + jog計3.0km"
-  data  ("データ") how it went, one line per set: splits, HRmax, watts
+  kind  ("kind")    a label: rest / Jog / Jog + WS / Threshold / VO2 / race /
+                    composites such as "Jog + Threshold"
+  menu  ("menu")    what was done: "5x1000m + jog 3.0km"
+  data  ("result")  how it went, one line per set: splits, HRmax, watts
 
 The label is decided by three votes, never by pace alone:
 
@@ -37,15 +37,15 @@ RUN_TYPES = {"running", "track_running", "trail_running",
 
 
 # --------------------------------------------------------------------------- #
-# formatting (these strings land in the sheet, so they stay in the sheet's     #
-# own language: 分 = minutes, jog計 = "jog, total")                            #
+# formatting (these strings are written straight into the sheet, so they are    #
+# kept short: a cell is read at a glance, not parsed)                           #
 # --------------------------------------------------------------------------- #
 def fmt_km(m):
     return f"{m/1000:.2f}km"
 
 
 def fmt_min(s):
-    return f"{round(s/60)}分"
+    return f"{round(s/60)}min"
 
 
 def fmt_pace(s, m):
@@ -293,7 +293,7 @@ def build_entry(g, date_str, acts, gates=None, race=False, laps_of=None):
         menu = " + ".join(f"{fmt_km(a['distance'])} {fmt_min(a['duration'])}"
                           for a in main)
         if small >= 0.3:
-            menu += f" + jog計{small:.1f}km"
+            menu += f" + jog {small:.1f}km"
         data = " / ".join(
             f"{fmt_pace(a['duration'], a['distance'])} {fmt_hr(a.get('averageHR'))}".strip()
             for a in main)
@@ -329,7 +329,7 @@ def build_entry(g, date_str, acts, gates=None, race=False, laps_of=None):
 
     menu = " + ".join(_set_menu(st) for st in sets_all)
     if easy_km >= 0.5:
-        menu += f" + jog計{easy_km:.1f}km"
+        menu += f" + jog {easy_km:.1f}km"
 
     lines = [_set_line(st) for st in sets_all]
     for a in easy_runs:                                   # steady legs >= 1.5 km

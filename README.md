@@ -16,41 +16,41 @@ examples/classify_demo.py`, verbatim:
 Session classifier on the fixtures from tests/test_classify.py
 (thresholds from athlete.example.json; no network, no credentials)
 
-  in    a rest day (nothing in Garmin)
-  種別  rest            quality session: no
-  詳細  -
-  データ -
+  in      a rest day (nothing in Garmin)
+  kind    rest            quality session: no
+  menu    -
+  result  -
 
-  in    8 km at 5:00/km, HR 140
-  種別  Jog             quality session: no
-  詳細  8.00km 40分
-  データ 5:00/km HR140
+  in      8 km at 5:00/km, HR 140
+  kind    Jog             quality session: no
+  menu    8.00km 40min
+  result  5:00/km HR140
 
-  in    8 km continuous at 4:00/km, HR 176, 340 W
-  種別  Threshold       quality session: yes
-  詳細  8000m
-  データ 8000m 32'00" (4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00") aHR176 340W
+  in      8 km continuous at 4:00/km, HR 176, 340 W
+  kind    Threshold       quality session: yes
+  menu    8000m
+  result  8000m 32'00" (4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00") aHR176 340W
 
-  in    5x1000m at 3:20/km, HR 186, 370 W, 200 m jog recovery
-  種別  VO2             quality session: yes
-  詳細  5×1000m
-  データ 1000m 3'20"-3'20"-3'20"-3'20"-3'20" HRmax190 370W
+  in      5x1000m at 3:20/km, HR 186, 370 W, 200 m jog recovery
+  kind    VO2             quality session: yes
+  menu    5×1000m
+  result  1000m 3'20"-3'20"-3'20"-3'20"-3'20" HRmax190 370W
 
-  in    8x200m at 2:30/km, HR 170, walk recovery
-  種別  Speed           quality session: yes
-  詳細  8×200m
-  データ 200m 30-30-30-30-30-30-30-30 HRmax185
+  in      8x200m at 2:30/km, HR 170, walk recovery
+  kind    Speed           quality session: yes
+  menu    8×200m
+  result  200m 30-30-30-30-30-30-30-30 HRmax185
 
-  in    a morning jog and an evening threshold run
-  種別  Jog + Threshold quality session: yes
-  詳細  8000m + jog計6.0km
-  データ 8000m 32'00" (4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00") aHR176 340W
-        6.0km 5:00/km HR140
+  in      a morning jog and an evening threshold run
+  kind    Jog + Threshold quality session: yes
+  menu    8000m + jog 6.0km
+  result  8000m 32'00" (4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00"-4'00") aHR176 340W
+          6.0km 5:00/km HR140
 ```
 
-The sheet is in Japanese because a real person reads it every day. The column
-names are translated in [Column reference](#column-reference); nothing else in
-the pipeline depends on the language.
+Every column name, label and note is listed in
+[Column reference](#column-reference). They are the sheet's own headers, so
+renaming one changes what a human sees and nothing else.
 
 ```
 pip install -r requirements.txt
@@ -109,8 +109,8 @@ writer**, declared in `log_io.py` and never decided at runtime:
 
 | set | columns | policy |
 |---|---|---|
-| `HAND_COLS` | 試合 (races and events), メモ (note) | never written by the pipeline at all |
-| `FILL_EMPTY_COLS` | 種別 (label), 詳細 (menu), データ (result) | written only into an empty cell |
+| `HAND_COLS` | `event` (races and events), `note` | never written by the pipeline at all |
+| `FILL_EMPTY_COLS` | `kind` (label), `menu`, `result` | written only into an empty cell |
 | `GARMIN_COLS` | everything measured | always refreshed; Garmin is authoritative |
 
 Four consequences, each of them replacing an earlier version that got it wrong:
@@ -164,13 +164,13 @@ while looking exactly like a human classification.
 
 Both are inferences, meant to be recalibrated against how you actually felt.
 
-*Sleep (睡眠点).* Duration, gated hard, plus stage adequacy (deep and REM as
+*Sleep (`sleep_score`).* Duration, gated hard, plus stage adequacy (deep and REM as
 fractions of the night), continuity, and how far overnight HRV recovered
 towards the personal band. A short night cannot score well however good the
 stages are, which is the point: the stage percentages of a four-hour night
 often look excellent.
 
-*Condition (体調点).* Is the body intact: illness, sleep debt, autonomic
+*Condition (`cond_score`).* Is the body intact: illness, sleep debt, autonomic
 disturbance. It starts at 100 and subtracts four independent deductions,
 autonomic (HRV against Garmin's personal band), sleep (last night plus
 accumulated debt), somatic (resting heart rate, respiration, daytime rest) and
@@ -341,37 +341,38 @@ The `Log` tab, left to right. This is the schema; new columns go at the end.
 | column | meaning | writer |
 |---|---|---|
 | `date` | ISO date, the primary key | pipeline |
-| `曜日` | weekday | pipeline |
-| `試合` | race or event | hand |
-| `種別` | session label (`Jog`, `Threshold`, `VO2`, `race`, `rest`, `off`, composites) | fill-empty |
+| `wd` | weekday | pipeline |
+| `event` | race or event | hand |
+| `kind` | session label (`Jog`, `Threshold`, `VO2`, `race`, `rest`, `off`, composites) | fill-empty |
 | `km` | distance run | Garmin |
-| `詳細` | what was done (the menu) | fill-empty |
-| `データ` | how it went (splits, HRmax, watts) | fill-empty |
-| `睡眠h` `深睡眠h` `レムh` `覚醒h` | sleep, deep, REM, awake, in hours | Garmin |
-| `HRV` `RHR` `準備度` | overnight HRV, resting heart rate, readiness | Garmin |
-| `睡眠点` `睡眠評価` | sleep score and its label | Garmin |
-| `体調点` `体調評価` | condition score and its label | Garmin |
-| `歩数` `階段` | steps, floors climbed | Garmin |
-| `強度分` | intensity minutes (moderate + 2 × vigorous) | Garmin |
-| `BB消費` | Body Battery drained | Garmin |
+| `menu` | what was done | fill-empty |
+| `result` | how it went (splits, HRmax, watts) | fill-empty |
+| `sleep_h` `deep_h` `rem_h` `awake_h` | sleep, deep, REM, awake, in hours | Garmin |
+| `HRV` `RHR` `readiness` | overnight HRV, resting heart rate, readiness | Garmin |
+| `sleep_score` `sleep_label` | sleep score and its label | Garmin |
+| `cond_score` `cond_label` | condition score and its label | Garmin |
+| `steps` `floors` | steps, floors climbed | Garmin |
+| `intensity_min` | intensity minutes (moderate + 2 × vigorous) | Garmin |
+| `bb_drained` | Body Battery drained | Garmin |
 | `ACWR` | acute:chronic workload ratio | Garmin |
-| `回復h` | recovery hours remaining | Garmin |
-| `負荷` | session training load | Garmin |
-| `メモ` | free note | hand |
+| `recovery_h` | recovery hours remaining | Garmin |
+| `load` | session training load | Garmin |
+| `note` | free note | hand |
 
 Labels that appear in the cells:
 
 | label | meaning |
 |---|---|
-| 体調評価 好調 / 良好 / 要観察 / 不調 | strong / fine, small deduction / watch this / unwell |
-| 睡眠評価 優 / 良 / 可 / 不足 | excellent / good / fair / short |
+| `cond_label` `strong` / `fine` / `watch` / `unwell` | nothing wrong / a small deduction / something is off / several things are |
+| `sleep_label` `excellent` / `good` / `fair` / `short` | the night, graded on duration first |
 | a trailing `*` | a minor input was unavailable that day |
-| a bracket, e.g. `良好(睡眠-12)` | the largest single deduction |
-| 種別 `Jog + WS` | easy run with strides |
-| 種別 `rest` / `off` | no running / a planned day off |
+| a bracket, e.g. `fine(sleep-12)` | the largest single deduction |
+| `kind` `Jog + WS` | easy run with strides |
+| `kind` `rest` / `off` | no running / a planned day off |
 
-The month tabs add `予定` (what was planned or confirmed for that day) and
-`内容` (menu and result joined), and reuse the names above for everything else.
+The month tabs add `plan` (what was planned or confirmed for that day) and
+`detail` (menu and result joined), and reuse the names above for everything
+else.
 
 ## Caveats
 

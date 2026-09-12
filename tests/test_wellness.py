@@ -50,8 +50,8 @@ def test_perfect_stages_cannot_rescue_a_short_night():
     short = wellness.sleep_score(night(3.0, deep=0.25, rem=0.25, awake=0.0))
     full = wellness.sleep_score(night(8.0, deep=0.25, rem=0.25, awake=0.0))
     assert short[0] < full[0]
-    assert full[1] == "優"
-    assert short[1] != "優"
+    assert full[1] == "excellent"
+    assert short[1] != "excellent"
 
 
 def test_broken_sleep_scores_below_continuous_sleep():
@@ -66,7 +66,7 @@ def test_broken_sleep_scores_below_continuous_sleep():
 def test_a_clean_day_scores_at_the_top(k):
     score, label, _ = wellness.condition_score(day(), BASE, k)
     assert score >= k["lb_good"]
-    assert label.startswith("好調")
+    assert label.startswith("strong")
     assert "*" not in label                      # nothing was missing
 
 
@@ -102,7 +102,7 @@ def test_an_unexplained_crash_reaches_the_warning_labels(k):
     crashed = day(hrv=30, hrv_weekly=30, load_explained=0.0)
     score, label, _ = wellness.condition_score(crashed, BASE, k)
     assert score < k["lb_fatigue"]
-    assert label.startswith(("要観察", "不調"))
+    assert label.startswith(("watch", "unwell"))
 
 
 def test_a_partial_explanation_lands_between_the_two(k):

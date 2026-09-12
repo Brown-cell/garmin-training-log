@@ -29,33 +29,34 @@ from . import classify, config, garmin_fetch, wellness
 
 TAB = config.LOG_TAB
 
-# Weekday initials as they appear in the sheet (Mon..Sun).
-WD = ["月", "火", "水", "木", "金", "土", "日"]
+# Weekday names as they appear in the sheet (Mon..Sun).
+WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 # The schema. Add new columns AT THE END only: readers that resolve a column by
 # position would otherwise start reading its neighbour.
 #
-#   date 曜日      ISO date, weekday
-#   試合 種別 km   race or event (hand), session label, distance
-#   詳細 データ    what was done, how it went
-#   睡眠h..準備度  raw Garmin wellness
-#   睡眠点..体調評価  derived scores and their labels
-#   歩数..負荷     movement and load
-#   メモ           free note (hand)
-HEADER = ["date", "曜日", "試合", "種別", "km", "詳細", "データ",
-          "睡眠h", "深睡眠h", "レムh", "覚醒h", "HRV", "RHR", "準備度",
-          "睡眠点", "睡眠評価", "体調点", "体調評価",
-          "歩数", "階段", "強度分", "BB消費", "ACWR", "回復h", "負荷",
-          "メモ"]
+#   date wd            ISO date, weekday
+#   event kind km      race or event (hand), session label, distance
+#   menu result        what was done, how it went
+#   sleep_h..readiness raw Garmin wellness
+#   sleep_score..cond_label  derived scores and their labels
+#   steps..load        movement and load
+#   note               free note (hand)
+HEADER = ["date", "wd", "event", "kind", "km", "menu", "result",
+          "sleep_h", "deep_h", "rem_h", "awake_h", "HRV", "RHR", "readiness",
+          "sleep_score", "sleep_label", "cond_score", "cond_label",
+          "steps", "floors", "intensity_min", "bb_drained", "ACWR",
+          "recovery_h", "load", "note"]
 
-# 予定 is accepted as well as 試合: the column has been called both, and a
+# `plan` is accepted as well as `event`: the column has been called both, and a
 # hand column that loses its protection because it was renamed is the one
 # mistake this set exists to prevent.
-HAND_COLS = {"試合", "予定", "メモ"}
-FILL_EMPTY_COLS = {"種別", "詳細", "データ"}
-GARMIN_COLS = {"睡眠h", "深睡眠h", "レムh", "覚醒h", "HRV", "RHR", "準備度",
-               "睡眠点", "睡眠評価", "体調点", "体調評価",
-               "歩数", "階段", "強度分", "BB消費", "ACWR", "回復h", "負荷", "km"}
+HAND_COLS = {"event", "plan", "note"}
+FILL_EMPTY_COLS = {"kind", "menu", "result"}
+GARMIN_COLS = {"sleep_h", "deep_h", "rem_h", "awake_h", "HRV", "RHR",
+               "readiness", "sleep_score", "sleep_label", "cond_score",
+               "cond_label", "steps", "floors", "intensity_min", "bb_drained",
+               "ACWR", "recovery_h", "load", "km"}
 
 
 def colA1(idx):
@@ -181,34 +182,34 @@ def garmin_cells(g, iso, athlete=None):
             c[k] = v
 
     if o.get("sleep_s"):
-        put("睡眠h", round(o["sleep_s"] / 3600, 1))
-        put("深睡眠h", round((o.get("deep_s") or 0) / 3600, 1))
-        put("レムh", round((o.get("rem_s") or 0) / 3600, 1))
-        put("覚醒h", round((o.get("awake_s") or 0) / 3600, 1))
+        put("sleep_h", round(o["sleep_s"] / 3600, 1))
+        put("deep_h", round((o.get("deep_s") or 0) / 3600, 1))
+        put("rem_h", round((o.get("rem_s") or 0) / 3600, 1))
+        put("awake_h", round((o.get("awake_s") or 0) / 3600, 1))
     put("km", garmin_fetch.run_km(g, iso))
     put("HRV", o.get("hrv"))
     put("RHR", o.get("rhr"))
-    put("準備度", o.get("readiness"))
+    put("readiness", o.get("readiness"))
     if ss is not None:
-        put("睡眠点", ss)
-        put("睡眠評価", sl)
+        put("sleep_score", ss)
+        put("sleep_label", sl)
     if cs is not None:
-        put("体調点", cs)
-        put("体調評価", cl)
-    put("歩数", act.get("steps"))
-    put("階段", act.get("floors"))
+        put("cond_score", cs)
+        put("cond_label", cl)
+    put("steps", act.get("steps"))
+    put("floors", act.get("floors"))
     if act.get("intensity_min") is not None:
-        c["強度分"] = act["intensity_min"]
-    put("BB消費", act.get("bb_drained"))
+        c["intensity_min"] = act["intensity_min"]
+    put("bb_drained", act.get("bb_drained"))
     put("ACWR", act.get("acwr"))
     if act.get("recovery_h") is not None:
-        c["回復h"] = act["recovery_h"]
-    put("負荷", act.get("session_load"))
+        c["recovery_h"] = act["recovery_h"]
+    put("load", act.get("session_load"))
     return c
 
 
 def running_cells(g, iso, gates=None, race=False):
-    """{種別, km, 詳細, データ} derived from the day's activities."""
+    """{kind, km, menu, result} derived from the day's activities."""
     acts = garmin_fetch._try(g.get_activities_by_date, iso, iso) or []
     kind, menu, data, _ = classify.build_entry(g, iso, acts, gates=gates, race=race)
-    return {"種別": kind, "km": parse_km(menu), "詳細": menu, "データ": data}
+    return {"kind": kind, "km": parse_km(menu), "menu": menu, "result": data}

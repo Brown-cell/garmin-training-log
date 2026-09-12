@@ -41,11 +41,11 @@ and a day missing a minor channel is marked with a trailing asterisk.
 """
 from . import config
 
-# Labels written into the sheet, kept in the sheet's own language.
-#   好調 = strong / 良好 = fine, with a small deduction /
-#   要観察 = watch this / 不調 = unwell
-LABELS = ("好調", "良好", "要観察", "不調")
-SLEEP_LABELS = ("優", "良", "可", "不足")      # excellent / good / fair / short
+# The labels written into the sheet, best first.
+#   strong = nothing wrong / fine = a small deduction /
+#   watch = something is off / unwell = several things are
+LABELS = ("strong", "fine", "watch", "unwell")
+SLEEP_LABELS = ("excellent", "good", "fair", "short")
 
 
 def params(athlete=None):
@@ -110,8 +110,8 @@ def sleep_score(o):
     label = (SLEEP_LABELS[0] if score >= 85 else
              SLEEP_LABELS[1] if score >= 70 else
              SLEEP_LABELS[2] if score >= 55 else SLEEP_LABELS[3])
-    reason = (f"{h:.1f}h/深{frac(o.get('deep_s'))*100:.0f}%"
-              f"/レム{frac(o.get('rem_s'))*100:.0f}%")
+    reason = (f"{h:.1f}h/deep {frac(o.get('deep_s'))*100:.0f}%"
+              f"/REM {frac(o.get('rem_s'))*100:.0f}%")
     return score, label, reason
 
 
@@ -137,9 +137,9 @@ def condition_score(o, base, k=None):
                 and o.get("b_low") is not None)
     have_sleep = bool(o.get("sleep_s")) or o.get("sleep_hist") is not None
     if not (have_hrv and have_sleep):
-        lack = "・".join(x for x, ok in (("HRV", have_hrv), ("睡眠", have_sleep))
+        lack = ", ".join(x for x, ok in (("HRV", have_hrv), ("sleep", have_sleep))
                          if not ok)
-        return None, "no-data", f"{lack}が無いので採点しない"
+        return None, "no-data", f"no {lack}, so the day is not scored"
 
     notes, missing, ded = [], [], {}
     score = 100.0
@@ -154,10 +154,10 @@ def condition_score(o, base, k=None):
     dw = _hrv_dev(o.get("hrv_weekly"), b_low, low_up)
     if dn is None:
         dev = dw
-        missing.append("前夜HRV")
+        missing.append("last night's HRV")
     elif dw is None:
         dev = dn
-        missing.append("HRV週平均")
+        missing.append("HRV weekly mean")
     else:
         dev = k["hrv_w_night"] * dn + k["hrv_w_week"] * dw
     if dev:
@@ -169,27 +169,27 @@ def condition_score(o, base, k=None):
         p = dev * w
         score -= p
         ded["HRV"] = ded.get("HRV", 0) + p
-        notes.append(f"HRV低下 -{p:.0f}(練習による説明 {ex:.0%})")
+        notes.append(f"HRV down -{p:.0f} (training explains {ex:.0%})")
 
     # ---- 2. sleep (never excused by training) ----------------------------- #
     ss = sleep_score(o)[0]
     if ss is None:
-        missing.append("睡眠")
+        missing.append("sleep")
     else:
         p = min(k["sleep_cap"], max(0.0, k["sleep_pivot"] - ss) * k["sleep_k"])
         if p >= 0.5:
             score -= p
-            ded["睡眠"] = ded.get("睡眠", 0) + p
-            notes.append(f"前夜の睡眠({ss}) -{p:.0f}")
+            ded["sleep"] = ded.get("sleep", 0) + p
+            notes.append(f"last night's sleep ({ss}) -{p:.0f}")
     sh = o.get("sleep_hist")
     if sh is None:
-        missing.append("睡眠履歴")
+        missing.append("sleep history")
     else:
         p = min(k["debt_cap"], max(0.0, k["debt_pivot"] - sh) * k["debt_k"])
         if p >= 0.5:
             score -= p
-            ded["睡眠"] = ded.get("睡眠", 0) + p
-            notes.append(f"睡眠不足の蓄積({sh}%) -{p:.0f}")
+            ded["sleep"] = ded.get("sleep", 0) + p
+            notes.append(f"accumulated sleep debt ({sh}%) -{p:.0f}")
 
     # ---- 3. somatic (also never excused) ---------------------------------- #
     if not o.get("rhr"):
@@ -202,38 +202,38 @@ def condition_score(o, base, k=None):
             ded["RHR"] = p
             notes.append(f"RHR+{d:.0f} -{p:.0f}")
     if not o.get("resp"):
-        missing.append("呼吸")
+        missing.append("respiration")
     else:
         d = o["resp"] - base["resp"]
         p = min(k["resp_cap"], max(0.0, (d - k["resp_dead"]) * k["resp_k"]))
         if p >= 0.5:
             score -= p
-            ded["呼吸"] = p
-            notes.append(f"呼吸+{d:.1f} -{p:.0f}")
+            ded["respiration"] = p
+            notes.append(f"respiration +{d:.1f} -{p:.0f}")
     # rest_pct and bb_charged come back as 0 when absent, and a real day is
     # always positive, so 0 means missing rather than terrible.
     rp = o.get("rest_pct")
     if not rp:
-        missing.append("安静回復")
+        missing.append("daytime rest")
     elif rp < k["rest_pivot"]:
         p = min(k["rest_cap"], (k["rest_pivot"] - rp) * k["rest_k"])
         score -= p
-        ded["安静回復"] = p
-        notes.append(f"安静回復乏({rp:.0f}%) -{p:.0f}")
+        ded["daytime rest"] = p
+        notes.append(f"little daytime rest ({rp:.0f}%) -{p:.0f}")
 
     # ---- 4. secondary (small, capped) ------------------------------------- #
     sth = o.get("stress_hist")
     if sth is not None and sth < k["stress_pivot"]:
         p = min(k["stress_cap"], (k["stress_pivot"] - sth) * k["stress_k"])
         score -= p
-        ded["ストレス"] = p
-        notes.append(f"ストレス負荷({sth}) -{p:.0f}")
+        ded["stress"] = p
+        notes.append(f"stress load ({sth}) -{p:.0f}")
     bbc = o.get("bb_charged")
     if bbc and bbc < k["bb_pivot"] and (o.get("load_explained") or 0) < 0.5:
         p = min(k["bb_cap"], (k["bb_pivot"] - bbc) * k["bb_k"])
         score -= p
-        ded["夜間回復"] = p
-        notes.append(f"夜間回復不良({bbc}) -{p:.0f}")
+        ded["overnight recharge"] = p
+        notes.append(f"poor overnight recharge ({bbc}) -{p:.0f}")
 
     score = int(round(max(0.0, min(100.0, score))))
     # The middle label says "fine", not "tired": the deduction is not
@@ -248,7 +248,7 @@ def condition_score(o, base, k=None):
             label += f"({name}-{val:.0f})"
     if missing:
         label += "*"                          # a minor input was unavailable
-        notes.append("欠測:" + "・".join(missing))
+        notes.append("missing: " + ", ".join(missing))
     if o.get("load_reason"):
         notes.append(o["load_reason"])
-    return score, label, "・".join(notes) or "クリーン"
+    return score, label, "; ".join(notes) or "clean"

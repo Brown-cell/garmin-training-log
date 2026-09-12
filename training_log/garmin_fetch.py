@@ -176,9 +176,11 @@ def load_explanation(g, d, athlete=None):
         if weight * s > ex:
             ex, best = weight * s, (back, dl, dkm)
     if ex == 0.0:
-        return 0.0, ("負荷不明(取得失敗・免罪なし)" if not ok else "直近に練習なし")
-    return ex, (f"{best[0]}日前 負荷{best[1]:.0f}/{best[2]:.1f}km→説明{ex:.2f}"
-                + ("" if ok else "(一部取得失敗)"))
+        return 0.0, ("load unknown (fetch failed, nothing excused)" if not ok
+                     else "no recent training")
+    return ex, (f"{best[0]}d ago: load {best[1]:.0f}/{best[2]:.1f}km "
+                f"-> explains {ex:.2f}"
+                + ("" if ok else " (some days could not be fetched)"))
 
 
 # --------------------------------------------------------------------------- #
