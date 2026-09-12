@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Test environment: dummy credentials and the example athlete file.
 
-Nothing in the suite reaches the network. The credentials below are deliberate
-nonsense -- they only have to exist, because the code refuses to run without
-them, and no test gets as far as authenticating with anything.
+Nothing in the suite reaches the network. The credentials below are nonsense on
+purpose: they only have to exist, because the code refuses to run without them,
+and no test gets as far as authenticating with anything.
 """
 import os
 import pathlib

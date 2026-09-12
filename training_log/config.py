@@ -22,9 +22,9 @@ Environment variables:
   GARMIN_TOKENS_DIR          optional. garminconnect's OAuth token cache.
                              Defaults to ~/.garminconnect
 
-The Garmin side deliberately has no username/password setting: log in once
-interactively with garminconnect so it writes its token cache, and this package
-only ever reads that cache.
+The Garmin side has no username/password setting: log in once interactively
+with garminconnect so it writes its token cache, and this package only ever
+reads that cache.
 """
 import functools
 import json
@@ -124,7 +124,7 @@ class Athlete:
 
     @property
     def baselines(self):
-        """{'rhr': float, 'resp': float} -- the shape the scorers expect."""
+        """{'rhr': float, 'resp': float}, the shape the scorers expect."""
         s = self.section("baselines")
         return {"rhr": float(s["resting_hr"]), "resp": float(s["respiration"])}
 

@@ -5,9 +5,9 @@ A Banister impulse-response model of the kind popularised by the TrainingPeaks
 Performance Management Chart. Each day's training load is fed into two
 exponentially weighted moving averages with different time constants:
 
-    CTL  chronic training load, 42 days  -- "fitness"
-    ATL  acute training load,    7 days  -- "fatigue"
-    TSB  CTL - ATL                       -- "form"
+    CTL  chronic training load, 42 days   "fitness"
+    ATL  acute training load,    7 days   "fatigue"
+    TSB  CTL - ATL                        "form"
 
     x_today = x_yesterday + (load_today - x_yesterday) * (1 - exp(-1/days))
 
@@ -17,12 +17,12 @@ against a published threshold is not. Treat every absolute TSB cutoff in this
 project as an inference awaiting personal calibration.
 
 **A missing day is not a rest day.** Both averages decay towards whatever they
-are fed, so scoring an un-synced day as zero load makes fatigue fall faster
-than it really did -- two missing days once moved a TSB from -26 to +2.5, which
-flipped a race-readiness verdict from "no" to "yes". Days with no evidence of
-having been imported at all are therefore filled with the current CTL, i.e.
-assumed typical, and returned in a separate set so the caller can refuse to
-publish a verdict that rests on them.
+are fed, so scoring an un-synced day as zero load makes fatigue fall faster than
+it really did. Two missing days once moved a TSB from -26 to +2.5 and flipped a
+race-readiness verdict from "no" to "yes". Days with no evidence of having been
+imported are therefore filled with the current CTL (assumed typical) and
+returned in a separate set, so the caller can refuse to publish a verdict that
+rests on them.
 """
 import datetime as dt
 import math

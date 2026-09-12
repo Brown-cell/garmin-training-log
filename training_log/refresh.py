@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nightly forward update of the Log tab -- the living-log refresh.
+"""Nightly forward update of the Log tab: the living-log refresh.
 
 For a window of recent dates (default: the last 10 days through today):
 
@@ -13,14 +13,14 @@ Self-healing, because the watch does not always sync before the job runs:
 
   * "rest" is only written for a COMPLETED day the watch has uploaded past.
     With no sync evidence the cell is left blank, and a later run in the window
-    fills it once the data arrives. The alternative -- writing rest and moving
-    on -- turns a sync delay into a permanent lie in the training history.
+    fills it once the data arrives. Writing rest and moving on instead turns a
+    sync delay into a permanent lie in the training history.
   * A placeholder the pipeline itself wrote is not a hand label. If Garmin
     later shows real running on such a day, the session columns are re-derived
     and overwritten. Real hand labels are never touched.
   * A stale automatic jog is re-derived too: the label is "Jog", the menu is
     still in the machine's own format, and Garmin now has more running than
-    that menu accounts for -- an evening second run that synced after the job.
+    that menu accounts for (an evening second run that synced after the job).
 
 Idempotent and non-destructive: re-run it whenever. Rows are found by date, so
 it is safe to run while a historical backfill is running.

@@ -10,11 +10,11 @@ Four zones, conclusion first and evidence below:
   3 週次    the last twelve weeks, newest first
   4 マクロ  the year by month, and where CTL sits in its own range
 
-Everything is computed here and written as STATIC values -- no live
+Everything is computed here and written as static values, with no live
 spreadsheet formulas. The tab is rebuilt after every nightly refresh, so it is
 never more than a day stale, and there is no formula-error surface at all.
 
-Three rules this dashboard follows, each of which came from being wrong once:
+Three rules this dashboard follows, each learned from being wrong once:
 
   * **Refuse to judge on incomplete data.** If any day inside the seven-day
     fatigue window was not imported, TSB is an estimate, and the verdict is
@@ -131,8 +131,8 @@ def last_allout(days, today, allout_load):
 def allout_note(days, today, allout_load, window):
     """The warning text while inside the window after a maximal effort.
 
-    Every autonomic metric on this dashboard -- TSB, readiness, HRV, resting
-    heart rate, the condition score -- is measuring the same recovery, so in
+    Every autonomic metric on this dashboard (TSB, readiness, HRV, resting
+    heart rate, the condition score) is measuring the same recovery, so in
     the days after an all-out effort they agree with each other and are all
     wrong together. Five green lights on one morning are one green light.
     """
@@ -221,7 +221,7 @@ def vo2_at(g, iso):
 
 
 def race_pred_hist(g, d0, d1):
-    """[{calendarDate, time5K, time10K}] -- the API shape is version dependent."""
+    """[{calendarDate, time5K, time10K}]; the API shape is version dependent."""
     for typ in ("daily", "monthly", None):
         r = garmin_fetch._try(g.get_race_predictions, d0.isoformat(),
                               d1.isoformat(), typ)

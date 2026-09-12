@@ -9,9 +9,9 @@
                               across days
 
 Every field degrades to None if Garmin returns nothing for that day (an
-un-synced watch, or a rest day with no wearable data). None means "not known",
-never "zero" -- the difference matters downstream, where a missing day would
-otherwise be averaged in as a rest day.
+un-synced watch, or a rest day with no wearable data). None means "not known"
+rather than "zero", and the difference matters downstream, where a missing day
+would otherwise be averaged in as a rest day.
 """
 import datetime as dt
 

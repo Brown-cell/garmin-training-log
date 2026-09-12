@@ -9,23 +9,23 @@ so they can be recomputed in any order and tested without a network.
                    overnight HRV recovered towards the personal band. A short
                    night cannot score well however good the stages are.
 
-  condition_score  0-100. **Is the body intact** -- illness, sleep debt,
-                   autonomic disturbance. Starts at 100 and subtracts four
+  condition_score  0-100. Is the body intact: illness, sleep debt, autonomic
+                   disturbance. Starts at 100 and subtracts four
                    independent deductions: autonomic (HRV against the personal
                    band), sleep (last night plus accumulated debt), somatic
                    (resting HR, respiration, daytime rest), and secondary
                    (stress load, overnight recharge).
 
-Two properties of the condition score are the whole point of it:
+Two properties of the condition score are the design:
 
-1. **Recent training excuses only the autonomic term.** A hard session does
-   lower HRV, and that is productive fatigue rather than illness, so the
-   autonomic deduction shrinks in proportion to how well recent load explains
-   the drop. Training does not explain a short night, so the sleep terms are
-   never forgiven. An earlier version forgave everything at once and could not
-   leave its top label while the excuse gate was on.
+1. Recent training excuses only the autonomic term. A hard session does lower
+   HRV, and that is productive fatigue rather than illness, so the autonomic
+   deduction shrinks in proportion to how well recent load explains the drop.
+   Training does not explain a short night, so the sleep terms are never
+   forgiven. An earlier version forgave everything at once and could not leave
+   its top label while the excuse gate was on.
 
-2. **The excuse is continuous, not a switch.** A boolean gate puts a cliff
+2. The excuse is continuous rather than a switch. A boolean gate puts a cliff
    between "one jog forgives everything" and "nothing forgives anything", and
    which side of the cliff a day lands on moves the score by tens of points.
 

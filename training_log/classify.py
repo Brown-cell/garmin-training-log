@@ -8,7 +8,7 @@
   menu  ("詳細")  what was done: "5x1000m + jog計3.0km"
   data  ("データ") how it went, one line per set: splits, HRmax, watts
 
-The label is DECIDED BY THREE VOTES, never by pace alone:
+The label is decided by three votes, never by pace alone:
 
   structure  laps are split into reps and sets. A rep is a contiguous run of
              "quality" laps (the watch chops one continuous effort into several
@@ -21,14 +21,14 @@ The label is DECIDED BY THREE VOTES, never by pace alone:
              against the athlete's own lactate-test anchors in athlete.json.
 
   power      running power rescues the HR vote. Wrist optical HR drops out
-             constantly on track reps -- a 2:54/km rep can read 86 bpm on a day
-             whose race maximum was 172 -- and a session graded on that is
+             constantly on track reps (a 2:54/km rep can read 86 bpm on a day
+             whose race maximum was 172), and a session graded on that is
              graded on a sensor failure. Power does not drop out.
 
-There is deliberately no "something happened here" label. A label that only
-records uncertainty is worse than no label at all: the rest of the pipeline
-cannot act on it, and it survives in the sheet looking exactly like a
-hand-written classification. Every day resolves to a real zone or to rest.
+There is no "something happened here" label. A label that only records
+uncertainty cannot be acted on by the rest of the pipeline, and it survives in
+the sheet looking exactly like a hand-written classification. Every day
+resolves to a real zone or to rest.
 """
 from . import config
 

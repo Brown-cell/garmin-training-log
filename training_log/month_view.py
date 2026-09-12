@@ -5,27 +5,27 @@
 day, a week subtotal after every Sunday, a KPI strip at the top, and two hand
 columns the athlete writes in.
 
-Design decisions worth knowing before editing it:
+Design decisions behind it:
 
-  * **Every cell except the hand columns is a formula reading Log**, so the
-    nightly refresh keeps this tab live without rebuilding it.
-  * **One hue, and no cell shading.** A single-hue ramp only supports a few
+  * Every cell except the hand columns is a formula reading Log, so the nightly
+    refresh keeps this tab live without rebuilding it.
+  * One hue, and no cell shading. A single-hue ramp only supports a few
     distinguishable lightness steps, and shading every number turns the month
-    into wallpaper. Anomalies are marked with bold navy text instead, so the
-    few marks that appear actually mean something.
-  * **Only decision columns are marked** -- sleep, condition, ACWR, quality
-    sessions. Raw physiology lives in a collapsed column group.
-  * **HRV gets an arrow only when it moves beyond one standard deviation** of
-    its own preceding 28 days, after Buchheit's smallest-worthwhile-change
+    into wallpaper. Anomalies get bold navy text instead, so the few marks that
+    appear actually mean something.
+  * Only decision columns are marked: sleep, condition, ACWR, quality sessions.
+    Raw physiology lives in a collapsed column group.
+  * HRV gets an arrow only when it moves beyond one standard deviation of its
+    own preceding 28 days, after Buchheit's smallest-worthwhile-change
     argument. An arrow on every wobble is the same as no arrow at all.
-  * The arrow is a statistical mark, not a health verdict. The condition score
-    judges HRV against Garmin's personal band, which is a different threshold,
-    so a day can lose condition points with no arrow.
+  * The arrow is a statistical mark rather than a health verdict. The condition
+    score judges HRV against Garmin's personal band, a different threshold, so
+    a day can lose condition points with no arrow.
 
 Creating a tab is a different act from updating one and needs `--allow-new-tab`.
-A missing tab is nearly always a mistyped name, and silently creating one
-splits the hand columns across a real tab and a decoy nobody opens -- and the
-plan column has no other copy anywhere.
+A missing tab is nearly always a mistyped name, silently creating one splits the
+hand columns across a real tab and a decoy nobody opens, and the plan column has
+no other copy anywhere.
 
   python -m training_log.month_view --month 7            # preview
   python -m training_log.month_view --month 7 --write

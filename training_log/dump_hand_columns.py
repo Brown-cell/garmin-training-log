@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Snapshot every month tab's hand-written columns to a local file.
 
-Why this exists: the plan column of the month tabs is the only address of
-confirmed races and events. It is not in Log, and `month_view` only salvages it
-from the tab it is about to rewrite -- so deleting, renaming or recreating a
-tab loses it with no way back. A copy on disk is enough, provided whatever
-backs up your machine picks it up; this deliberately does not build a second
-backup system.
+The plan column of the month tabs is the only address of confirmed races and
+events. It is not in Log, and `month_view` only salvages it from the tab it is
+about to rewrite, so deleting, renaming or recreating a tab loses it with no
+way back. A copy on disk is enough, provided whatever backs up your machine
+picks it up; this is not a second backup system.
 
 Read-only by construction: it calls `worksheets()` and `get_all_values()` and
 nothing else. It must never write to the spreadsheet.

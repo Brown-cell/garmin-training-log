@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Fill the Log tab backwards over a date range -- the one-off first import.
+"""Fill the Log tab backwards over a date range: the one-off first import.
 
 Same column policy as the nightly refresh, and it calls the same function to
 decide it (`refresh.day_cells`), so history and today are never filled by two

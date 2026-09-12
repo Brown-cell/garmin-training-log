@@ -2,10 +2,10 @@
 """The Log tab: its schema, its column policy, and date-keyed upsert.
 
 `Log` is the database. One row per calendar day, ISO date in column A as the
-primary key, no merged cells, no formulas, scores split from their labels. It
-is not meant to be read by a human -- the month view and the Status dashboard
-are. Everything that writes to it goes through here, so the rules below exist
-in exactly one place.
+primary key, no merged cells, no formulas, scores split from their labels. The
+month view and the Status dashboard are what a human reads. Everything that
+writes to `Log` goes through here, so the rules below exist in exactly one
+place.
 
 **The column policy is the safety rule of the whole project.** Each column
 belongs to exactly one writer:
