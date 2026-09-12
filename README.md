@@ -383,6 +383,10 @@ else.
 * An un-synced day is `None` rather than zero throughout, and stays blank until
   the watch uploads. A day that never gets imported is reported as such rather
   than averaged in.
+* `ACWR` is Garmin's number, copied through, and the month view marks it when
+  it leaves a band you set. The acute:chronic ratio is a way of watching load,
+  not a validated predictor of injury; the band is one athlete's, not a
+  published cutoff.
 * Garmin's API is undocumented and moves. Response shapes differ between
   library versions; several readers try more than one shape and fall back to
   `None`. A field that quietly becomes empty is the failure mode to expect.
