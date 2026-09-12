@@ -1,0 +1,88 @@
+{
+  "_README": "Copy to athlete.json and replace every number with your own. The values shipped here come from the author (a middle-distance runner) and are meaningless for anybody else: the heart-rate anchors are from a 2023 lactate test, the running-power bands were fitted on hand-labelled sessions, and the condition-score constants were tuned on roughly 200 days of that one person's data.",
+
+  "baselines": {
+    "_README": "Personal normal. resting_hr is the median of your own resting HR on healthy days; respiration is the median sleeping respiration rate (breaths/min). The condition score deducts points for excursions ABOVE these.",
+    "resting_hr": 45.0,
+    "respiration": 14.0
+  },
+
+  "classifier": {
+    "_README": "Run classifier gates. Pace is seconds per kilometre (smaller = faster), power is watts from a running-power capable watch, HR is bpm.",
+    "quality_lap_pace_sec_per_km": 250.0,
+    "quality_lap_power_w": 325.0,
+    "hr_rescue_min_bpm": 172.0,
+    "hr_rescue_pace_sec_per_km": 285.0,
+    "hr_dropout_below_bpm": 125,
+    "stride_pace_sec_per_km": 215.0,
+    "power_threshold_w": 335.0,
+    "power_vo2_w": 362.0,
+    "hr_threshold_bpm": 172.0,
+    "hr_obla_bpm": 180.0,
+    "hr_vo2_bpm": 184.0
+  },
+
+  "load_explanation": {
+    "_README": "How much a recent session is allowed to explain an overnight HRV drop. Load is Garmin's unitless activityTrainingLoad; for this athlete an easy jog lands near distance_km * 7-10, a quality session above 120, a race above 170. day_weights is how far back the window reaches (1 = yesterday).",
+    "easy_load": 40.0,
+    "hard_load": 120.0,
+    "easy_km": 10.0,
+    "hard_km": 20.0,
+    "easy_anaerobic_te": 0.5,
+    "hard_anaerobic_te": 2.0,
+    "day_weights": {"1": 1.0, "2": 0.6, "3": 0.3}
+  },
+
+  "condition_score": {
+    "_README": "Weights of the condition score (0-100, deductions from 100). Caps are the maximum points any one channel may remove; pivots are where a deduction starts; lb_* are the label boundaries.",
+    "hrv_w_night": 0.40,
+    "hrv_w_week": 0.60,
+    "hrv_pen_explained": 18.0,
+    "hrv_pen_unexplained": 50.0,
+    "sleep_pivot": 88.0,
+    "sleep_k": 0.34,
+    "sleep_cap": 20.0,
+    "debt_pivot": 80.0,
+    "debt_k": 0.26,
+    "debt_cap": 14.0,
+    "rhr_dead": 1.5,
+    "rhr_k": 5.0,
+    "rhr_cap": 22.0,
+    "resp_dead": 0.8,
+    "resp_k": 4.0,
+    "resp_cap": 10.0,
+    "rest_pivot": 20.0,
+    "rest_k": 0.6,
+    "rest_cap": 8.0,
+    "stress_pivot": 50.0,
+    "stress_k": 0.35,
+    "stress_cap": 7.0,
+    "bb_pivot": 60.0,
+    "bb_k": 0.25,
+    "bb_cap": 7.0,
+    "lb_good": 90,
+    "lb_fatigue": 66,
+    "lb_watch": 50
+  },
+
+  "pmc": {
+    "_README": "Banister fitness-fatigue model. ctl_days / atl_days are the exponential time constants in days (42 / 7 is the TrainingPeaks convention). season_start is where the series is seeded at zero; percentile_from skips the warm-up so 'CTL vs my own year' is not biased by the seed.",
+    "ctl_days": 42,
+    "atl_days": 7,
+    "season_start": "2026-01-01",
+    "percentile_from": "2026-02-15"
+  },
+
+  "status": {
+    "_README": "Status dashboard. acwr_safe is the acute:chronic band treated as normal; week_load_target_pct is the half-width of the weekly load target around CTL*7; all_out_* define the window after a maximal effort in which the autonomic metrics are not trusted; ctl_percentile_open is the CTL percentile the race-window verdict requires.",
+    "acwr_safe": [0.8, 1.3],
+    "week_load_target_pct": 0.15,
+    "all_out_load": 200,
+    "all_out_window_days": 7,
+    "ctl_percentile_open": 0.60
+  },
+
+  "races": [
+    ["2026-10-31", "5000 m time trial"]
+  ]
+}

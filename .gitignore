@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# Local configuration: the athlete's own constants and every credential
+athlete.json
+.env
+secrets/
+*sa*.json
+*service_account*.json
+*credential*.json
+*token*.json
+!athlete.example.json
+
+# Run logs hold health data and must never be committed
+logs/

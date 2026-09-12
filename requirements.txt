@@ -1,0 +1,7 @@
+# Runtime
+gspread>=6.0
+google-auth>=2.20
+garminconnect>=0.2.19
+
+# Tests
+pytest>=7.0
