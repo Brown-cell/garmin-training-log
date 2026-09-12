@@ -7,7 +7,7 @@ later you have stopped. Garmin already holds the laps, the sleep and the heart
 rate, so this is a nightly job that writes them into a Google Sheet: one row
 per day, the session named from its lap structure, two wellness scores, a
 fitness-fatigue series, and two tabs a runner reads in the morning. Written by
-a middle-distance runner who kept filling his own log in wrong.
+a middle-distance runner who kept filling in the log wrong by hand.
 
 The classifier runs without an account. This is `python
 examples/classify_demo.py`, verbatim:
